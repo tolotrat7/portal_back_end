@@ -17,6 +17,7 @@
     "dotenv": "^16.4.5",
     "express": "^4.21.1",
     "jsonwebtoken": "^9.0.2",
+    "ldap-authentication": "^3.2.4",
     "ldapjs": "^3.0.7",
     "mssql": "^11.0.1",
     "node-fetch": "^3.3.2"
