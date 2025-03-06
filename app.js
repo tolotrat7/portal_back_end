@@ -51,7 +51,7 @@ app.post("/receive-username", (req, res) => {
     return res.status(400).json({ message: "Aucun username reçu" });
   }
 
-  console.log("Username reçu du frontend :", username);
+  //console.log("Username reçu du frontend :", username);
   
   res.json({ message: `Username ${username} bien reçu !` });
 });
@@ -59,7 +59,7 @@ app.post("/receive-username", (req, res) => {
 app.post("/SocieteByUsername", async (req, res) => {
   try {
     const { username } = req.body;
-    console.log("Username reçu:", username);  // Vérification du username
+    //console.log("Username reçu:", username);  // Vérification du username
 
     if (!username) {
       return res.status(400).json({ message: "Aucun username reçu" });
@@ -73,7 +73,7 @@ app.post("/SocieteByUsername", async (req, res) => {
       `);
 
     if (result.recordset.length > 0) {
-      console.log("Société trouvée:", result.recordset[0].societe_AD); 
+      //console.log("Société trouvée:", result.recordset[0].societe_AD); 
       res.status(200).json({ societe: result.recordset[0].societe_AD });
     } else {
       res.status(404).json({ message: "Société non trouvée pour cet utilisateur." });
@@ -105,7 +105,7 @@ app.post("/getRattachementAD", async (req, res) => {
 
    
     if (result.recordset.length > 0) {
-      console.log("Rattachement_AD trouvé :", result.recordset[0].Rattachement_AD);
+      //console.log("Rattachement_AD trouvé :", result.recordset[0].Rattachement_AD);
       res.status(200).json({ rattachement: result.recordset[0].Rattachement_AD });
     } else {
       res.status(404).json({ message: "Aucun rattachement trouvé pour cet utilisateur." });
@@ -137,7 +137,7 @@ app.post("/getDGSociete", async (req, res) => {
 
    
     if (result.recordset.length > 0) {
-      console.log("DG_Societe trouvé :", result.recordset[0].DG_Societe);
+      //console.log("DG_Societe trouvé :", result.recordset[0].DG_Societe);
       res.status(200).json({ dgsociete: result.recordset[0].DG_Societe });
     } else {
       res.status(404).json({ message: "Aucun rattachement trouvé pour cet utilisateur." });
@@ -173,7 +173,7 @@ app.get("/getLoginHistory", async (req, res) => {
 
 app.get("/validations/:id_user", async (req, res) => {
   try {
-    console.log("Je suis là");
+    //console.log("Je suis là");
 
     let pool = await sql.connect(config);
     let result = await pool
@@ -193,7 +193,7 @@ app.get("/validations/:id_user", async (req, res) => {
 
 app.get("/validation/:id_user", async (req, res) => {
   try {
-    console.log("Je suis là");
+    //console.log("Je suis là");
 
     let pool = await sql.connect(config);
     let result = await pool.request()
@@ -245,7 +245,7 @@ app.get("/postes/:societe", async (req, res) => {
       .query(
         `SELECT [POSTE] from [Therefore].[dbo].[societe_postes] where [SOCIETE]= '${societe}' `
       );
-    console.log(`SELECT [POSTE] from [Therefore].[dbo].[societe_postes] where [SOCIETE]= '${societe}' `)
+    //console.log(`SELECT [POSTE] from [Therefore].[dbo].[societe_postes] where [SOCIETE]= '${societe}' `)
     res.status(200).send(result.recordset);
   } catch (err) {
     res.status(500).send("Database error");
@@ -291,7 +291,7 @@ app.get("/get-validators", async (req, res) => {
 
 
 app.post("/ldap",  (req, res) => {
-    console.log(req.body);
+    //console.log(req.body);
     
   const client = ldapjs.createClient({
     url: "ldap://ad-server-1.smtp-group.mg",
@@ -339,7 +339,7 @@ app.post("/ldap",  (req, res) => {
       });
 
       ldapRes.on("end", (result) => {
-        console.log("Recherche terminée avec statut :", result.status);
+        //console.log("Recherche terminée avec statut :", result.status);
         client.unbind();
       });
     });
@@ -347,5 +347,5 @@ app.post("/ldap",  (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log("Mande express");
+  //console.log("Mande express");
 });

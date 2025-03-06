@@ -30,7 +30,7 @@ router.get("/status", async (req, res) => {
       );
     return res.status(200).json(result.recordset);
   } catch (error) {
-    // //console.log("Erreur");
+    // ////console.log("Erreur");
     // Gestion des erreurs
     return res.status(500).json(error.message);
   }
@@ -39,7 +39,7 @@ router.get("/status/:etat", async (req, res) => {
   try {
     let pool = await sql.connect(config);
     let condition = `WHERE ${req.params.etat}=1`;
-    // console.log(`SELECT * FROM recrutement_info ${condition}`)
+    // //console.log(`SELECT * FROM recrutement_info ${condition}`)
     if (req.params.etat == "Attente") {
       condition = `WHERE Valide=0 and Refuse =0 `;
     }
@@ -48,7 +48,7 @@ router.get("/status/:etat", async (req, res) => {
       .query(`SELECT * FROM recrutement_info ${condition}`);
     return res.status(200).json(result.recordset);
   } catch (error) {
-    // //console.log("Erreur");
+    // ////console.log("Erreur");
     return res.status(500).json(error.message);
   }
 });
@@ -84,7 +84,7 @@ router.get("/temps-moyen-validation", async (req, res) => {
 
     
   } catch (error) {
-    // //console.log("Erreur");
+    // ////console.log("Erreur");
     return res.status(500).json(error.message);
   }
 });
@@ -123,7 +123,7 @@ const calculTemps_moyen=async(element,authHeader,heures)=>{
         }
       )
       .then(async function (response) {
-        // console.log(response.data.InfoLists[0].InstanceNo);
+        // //console.log(response.data.InfoLists[0].InstanceNo);
         await axios
           .post(
             "http://172.16.112.76:80/TheService/v0001/restun/GetWorkflowHistory",
