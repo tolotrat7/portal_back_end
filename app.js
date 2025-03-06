@@ -4,9 +4,11 @@ const sql = require("mssql");
 const app = express();
 const port = 8001;
 const ldapjs = require("ldapjs");
+var DashboardRouter = require('./routes/dashboard')
 
 app.use(cors());
 app.use(express.json());
+app.use('/dashboard',DashboardRouter)
 const config = {
   server: "172.16.112.76",
   port: 1433,
