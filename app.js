@@ -19,8 +19,8 @@ const config = {
     type: "default",
     options: {
       //domain: 'SMTP-GROUP', // Domain or machine name (or leave as an empty string for local auth)
-      userName: "Joastin", // Leave empty for the current Windows user
-      password: "joastin", // Leave empty for the current Windows user
+      userName: "Joastin", 
+      password: "joastin", 
     },
   },
 };
@@ -37,11 +37,137 @@ const configSage = {
     type: "default",
     options: {
       //domain: 'SMTP-GROUP', // Domain or machine name (or leave as an empty string for local auth)
-      userName: "recap", // Leave empty for the current Windows user
-      password: "PaieConsult1234", // Leave empty for the current Windows user
+      userName: "recap",
+      password: "PaieConsult1234",
     },
   },
 };
+
+app.post("/receive-username", (req, res) => {
+  const { username } = req.body;
+  if (!username) {
+    return res.status(400).json({ message: "Aucun username reçu" });
+  }
+
+  console.log("Username reçu du frontend :", username);
+  
+  res.json({ message: `Username ${username} bien reçu !` });
+});
+
+app.post("/SocieteByUsername", async (req, res) => {
+  try {
+    const { username } = req.body;
+    console.log("Username reçu:", username);  // Vérification du username
+
+    if (!username) {
+      return res.status(400).json({ message: "Aucun username reçu" });
+    }
+
+    let pool = await sql.connect(config);
+    const result = await pool.request()
+      .input("username", sql.NVarChar, username)
+      .query(`
+        SELECT societe_AD FROM TheSirh WHERE Login = @username
+      `);
+
+    if (result.recordset.length > 0) {
+      console.log("Société trouvée:", result.recordset[0].societe_AD); 
+      res.status(200).json({ societe: result.recordset[0].societe_AD });
+    } else {
+      res.status(404).json({ message: "Société non trouvée pour cet utilisateur." });
+    }
+  } catch (err) {
+    console.error("Erreur lors de la récupération de la société:", err);
+    res.status(500).send("Erreur serveur.");
+  }
+});
+
+app.post("/getRattachementAD", async (req, res) => {
+  try {
+    const { username } = req.body;  
+    if (!username) {
+      return res.status(400).json({ message: "Aucun username reçu" });
+    }
+
+   
+    let pool = await sql.connect(config);
+
+    
+    const result = await pool.request()
+      .input("username", sql.NVarChar, username)  
+      .query(`
+        SELECT [Rattachement_AD]
+        FROM [Therefore].[dbo].[TheSirh]
+        WHERE [Login] = @username
+      `);
+
+   
+    if (result.recordset.length > 0) {
+      console.log("Rattachement_AD trouvé :", result.recordset[0].Rattachement_AD);
+      res.status(200).json({ rattachement: result.recordset[0].Rattachement_AD });
+    } else {
+      res.status(404).json({ message: "Aucun rattachement trouvé pour cet utilisateur." });
+    }
+  } catch (err) {
+    console.error("Erreur lors de la récupération du rattachement:", err);
+    res.status(500).send("Erreur serveur.");
+  }
+});
+
+app.post("/getDGSociete", async (req, res) => {
+  try {
+    const { username } = req.body;  
+    if (!username) {
+      return res.status(400).json({ message: "Aucun username reçu" });
+    }
+
+   
+    let pool = await sql.connect(config);
+
+    
+    const result = await pool.request()
+      .input("username", sql.NVarChar, username)  
+      .query(`
+        SELECT [DG_Societe]
+        FROM [Therefore].[dbo].[TheSirh]
+        WHERE [Login] = @username
+      `);
+
+   
+    if (result.recordset.length > 0) {
+      console.log("DG_Societe trouvé :", result.recordset[0].DG_Societe);
+      res.status(200).json({ dgsociete: result.recordset[0].DG_Societe });
+    } else {
+      res.status(404).json({ message: "Aucun rattachement trouvé pour cet utilisateur." });
+    }
+  } catch (err) {
+    console.error("Erreur lors de la récupération du rattachement:", err);
+    res.status(500).send("Erreur serveur.");
+  }
+});
+
+
+app.get("/getLoginHistory", async (req, res) => {
+  try {
+    let pool = await sql.connect(config);
+    let result = await pool
+      .request()
+      .query(`SELECT TOP (1000) 
+              U.[Id]
+              , U.[Name]
+              , LH.[Timestamp]
+              FROM [Therefore].[dbo].[TheUser] U
+              JOIN [Therefore].[dbo].[TheLoginHistory] LH
+              ON U.UserNo = LH.UserNo
+              ORDER BY LH.[Timestamp] DESC`);
+    res.status(200).send(result.recordset);
+  } catch (err) {
+    res.status(500).send("Database error");
+    console.error(err);
+  }
+});
+
+
 
 app.get("/validations/:id_user", async (req, res) => {
   try {
@@ -61,6 +187,8 @@ app.get("/validations/:id_user", async (req, res) => {
   //   res.send('Hello World!')
 });
 
+
+
 app.get("/validation/:id_user", async (req, res) => {
   try {
     console.log("Je suis là");
@@ -68,7 +196,7 @@ app.get("/validation/:id_user", async (req, res) => {
     let pool = await sql.connect(config);
     let result = await pool.request()
       .query(`SELECT [Therefore].[dbo].[TheWFInstances].[InstanceNo],[TokenNo],[Therefore].[dbo].[TheWFTokens].[TaskNo],[TaskStartDate],[TaskDueDate],[TaskClaimDate],[OverdueMailSent],[LastUserNo],[TokenRows],[TokenTable],[ErrCode],[ErrInfo],[ErrTimeStamp],[ErrCount],[Therefore].[dbo].[TheWFInstances].[ProcessNo],[Therefore].[dbo].[TheWFDocuments].[DocNo],[Cabinet_de_recrutement_externe],[duree_Cdd],[Direction_de_rattachement],[Direction_des_Ressources_Humaines],[DG_Societe],[DAF_DG_Groupe],[Motif_de_recrutement],[Type_de_contrat],[Budgetise],[Date_de_demande],[Date_dembauche_souhaite],[Autre_motif_de_recrutement],[Poste_a_pourvoir_],[Societe],[Autre_type_de_contrat],[Effectif_actuel_au_poste],[Nombre_de_poste_a_pourvoir],[Motif_si_non],[Poste_a_pourvoir_creation],[Direction] FROM [Therefore].[dbo].[TheWFTokens] join [Therefore].[dbo].[TheWFChoices] on [Therefore].[dbo].[TheWFChoices].[TaskNo] = [Therefore].[dbo].[TheWFTokens].[TaskNo] join [Therefore].[dbo].[TheWFInstances] on [Therefore].[dbo].[TheWFInstances].[InstanceNo] = [Therefore].[dbo].[TheWFTokens].[InstanceNo] join [Therefore].[dbo].[TheWFProcesses] on [Therefore].[dbo].[TheWFProcesses].[ProcessNo] = [Therefore].[dbo].[TheWFInstances].[ProcessNo] join [Therefore].[dbo].[TheWFDocuments] on [Therefore].[dbo].[TheWFDocuments].[InstanceNo]= [Therefore].[dbo].[TheWFInstances].[InstanceNo]  join [Therefore].[dbo].[TheCat284] on [Therefore].[dbo].[TheCat284].[DocNo]=[Therefore].[dbo].[TheWFDocuments].[DocNo] where   [Therefore].[dbo].[TheWFChoices].[UserNo] =SELECT [Therefore].[dbo].[TheWFInstances].[InstanceNo],[TokenNo], [Therefore].[dbo].[TheWFTokens].[TaskNo], [TaskStartDate],[TaskDueDate],[TaskClaimDate], [OverdueMailSent],[LastUserNo],[TokenRows], [TokenTable],[ErrCode],[ErrInfo],[ErrTimeStamp], [ErrCount],[Therefore].[dbo].[TheWFInstances].[ProcessNo], [Therefore].[dbo].[TheWFDocuments].[DocNo], [Autre_motif_dembauche],[Condition_salariale], [Condition_salariale],[type_de_recrutement], [Nom_et_prenom],[DG_Societe],[DAF_Group],[DG_Societe],[D_Rattachement]
-                                                 FROM [Therefore].[dbo].[TheWFTokens] join [Therefore].[dbo].[TheWFChoices] on [Therefore].[dbo].[TheWFChoices].[TaskNo] = [Therefore].[dbo].[TheWFTokens].[TaskNo] join [Therefore].[dbo].[TheWFInstances] on [Therefore].[dbo].[TheWFInstances].[InstanceNo] = [Therefore].[dbo].[TheWFTokens].[InstanceNo] join [Therefore].[dbo].[TheWFProcesses] on [Therefore].[dbo].[TheWFProcesses].[ProcessNo] = [Therefore].[dbo].[TheWFInstances].[ProcessNo] join [Therefore].[dbo].[TheWFDocuments] on [Therefore].[dbo].[TheWFDocuments].[InstanceNo]= [Therefore].[dbo].[TheWFInstances].[InstanceNo]  join [Therefore].[dbo].[TheCat307] on [Therefore].[dbo].[TheCat307].[DocNo]=[Therefore].[dbo].[TheWFDocuments].[DocNo] where   [Therefore].[dbo].[TheWFChoices].[UserNo] =  ${req.params.id_user} `);
+              FROM [Therefore].[dbo].[TheWFTokens] join [Therefore].[dbo].[TheWFChoices] on [Therefore].[dbo].[TheWFChoices].[TaskNo] = [Therefore].[dbo].[TheWFTokens].[TaskNo] join [Therefore].[dbo].[TheWFInstances] on [Therefore].[dbo].[TheWFInstances].[InstanceNo] = [Therefore].[dbo].[TheWFTokens].[InstanceNo] join [Therefore].[dbo].[TheWFProcesses] on [Therefore].[dbo].[TheWFProcesses].[ProcessNo] = [Therefore].[dbo].[TheWFInstances].[ProcessNo] join [Therefore].[dbo].[TheWFDocuments] on [Therefore].[dbo].[TheWFDocuments].[InstanceNo]= [Therefore].[dbo].[TheWFInstances].[InstanceNo]  join [Therefore].[dbo].[TheCat307] on [Therefore].[dbo].[TheCat307].[DocNo]=[Therefore].[dbo].[TheWFDocuments].[DocNo] where   [Therefore].[dbo].[TheWFChoices].[UserNo] =  ${req.params.id_user} `);
     res.status(200).send(result.recordset);
   } catch (err) {
     res.status(500).send("Database error");
@@ -102,14 +230,20 @@ app.get("/getSociete/:id_user", async (req, res) => {
   }
 });
 
-app.get("/postes", async (req, res) => {
+
+
+
+
+app.get("/postes/:societe", async (req, res) => {
   try {
     let pool = await sql.connect(config);
+    let societe=req.params.societe
     let result = await pool
       .request()
       .query(
-        "SELECT [POSTE] from [Therefore].[dbo].[societe_postes] where [SOCIETE]= 'FLY_TECHNOLOGIES' "
+        `SELECT [POSTE] from [Therefore].[dbo].[societe_postes] where [SOCIETE]= '${societe}' `
       );
+    console.log(`SELECT [POSTE] from [Therefore].[dbo].[societe_postes] where [SOCIETE]= '${societe}' `)
     res.status(200).send(result.recordset);
   } catch (err) {
     res.status(500).send("Database error");
@@ -128,7 +262,6 @@ app.get("/societes", async (req, res) => {
     res.status(500).send("Database error");
     console.error(err);
   }
-  //   res.send('Hello World!')
 });
 app.get("/directions", async (req, res) => {
   try {
@@ -141,7 +274,6 @@ app.get("/directions", async (req, res) => {
     res.status(500).send("Database error");
     console.error(err);
   }
-  //   res.send('Hello World!')
 });
 
 app.get("/get-validators", async (req, res) => {
@@ -155,6 +287,7 @@ app.get("/get-validators", async (req, res) => {
   }
 });
 
+
 app.post("/ldap",  (req, res) => {
     console.log(req.body);
     
@@ -162,16 +295,16 @@ app.post("/ldap",  (req, res) => {
     url: "ldap://ad-server-1.smtp-group.mg",
     reconnect: true,
   });
-  const userDn = `SMTP-GROUP\\FT161`; // DN de l'utilisateur
-  const userPassword = "FUwK38bc"; // Mot de passe de l'utilisateur
+  const userDn = `SMTP-GROUP\\FT161`; 
+  const userPassword = "FUwK38bc"; 
   const searchBase = "dc=smtp-group,dc=mg";
-  const usernameAttribute = "samaccountname"; // Attribut utilisé pour identifier l'utilisateur
-  const userIdentifier = req.body.username; // Identifiant LDAP de l'utilisateur
+  const usernameAttribute = "samaccountname"; 
+  const userIdentifier = req.body.username; 
   let val = null;
   const searchOptions = {
-    filter: `(${usernameAttribute}=${userIdentifier})`, // Filtre LDAP
-    scope: "sub", // Portée de la recherche
-    attributes: ["DisplayName", "Office", "mail", "samaccountname", "Description","distinguishedName"], // Attributs à récupérer
+    filter: `(${usernameAttribute}=${userIdentifier})`, 
+    scope: "sub", 
+    attributes: ["DisplayName", "Office", "mail", "samaccountname", "Description","distinguishedName"], 
   };
   client.bind(userDn, userPassword, (err) => {
     if (err) {
@@ -185,7 +318,6 @@ app.post("/ldap",  (req, res) => {
       }
 
       ldapRes.on("searchEntry", async (entry) => {
-        //   console.log('Entrée trouvée :', entry.attributes);
         let element = {};
         entry.attributes.forEach(attribute => {
             element[attribute.type]=attribute.values[0]
@@ -198,13 +330,10 @@ app.post("/ldap",  (req, res) => {
             .query(
               "SELECT [POSTE] from [Therefore].[dbo].[societe_postes] where [SOCIETE]= 'FLY_TECHNOLOGIES' "
             );
-          // res.status(200).send(result.recordset);
         } catch (err) {
-          // res.status(500).send("Database error");
           console.error(err);
         }
         res.status(200).json(element);
-        // val=entry.attributes
       });
 
       ldapRes.on("end", (result) => {
@@ -213,10 +342,8 @@ app.post("/ldap",  (req, res) => {
       });
     });
   });
-//   console.log(val);
 });
 
 app.listen(port, () => {
   console.log("Mande express");
-  // console.log(`Example app listening on port ${port}`)
 });
