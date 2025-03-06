@@ -2,7 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const sql = require("mssql");
 const app = express();
-const port = 8001;
+const port = process.env.PORT;
 const ldapjs = require("ldapjs");
 var DashboardRouter = require('./routes/dashboard')
 
