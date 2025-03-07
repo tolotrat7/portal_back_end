@@ -2,7 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const sql = require("mssql");
 const app = express();
-const port = 8001;
+const port = process.env.PORT;
 const ldapjs = require("ldapjs");
 var DashboardRouter = require('./routes/dashboard')
 var LoginRouter = require('./routes/login')
@@ -361,7 +361,7 @@ app.post("/ldap",  (req, res) => {
   });
 });
 app.post("/log-login", async (req, res) => {
-  console.log("Requête reçue pour /log-login");
+  // console.log("Requête reçue pour /log-login");
   const { idUser } = req.body;
 
   if (!idUser) {
