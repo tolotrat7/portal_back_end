@@ -2,7 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const sql = require("mssql");
 const app = express();
-const port = process.env.PORT;
+const port = 8001;
 const ldapjs = require("ldapjs");
 var DashboardRouter = require('./routes/dashboard')
 
@@ -10,7 +10,7 @@ app.use(cors());
 app.use(express.json());
 app.use('/dashboard',DashboardRouter)
 const config = {
-  server: "172.16.112.76",
+  server: "172.16.112.84",
   port: 1433,
   database: "Therefore",
   options: {
@@ -21,8 +21,8 @@ const config = {
     type: "default",
     options: {
       //domain: 'SMTP-GROUP', // Domain or machine name (or leave as an empty string for local auth)
-      userName: "Joastin", 
-      password: "joastin", 
+      userName: "sirh", 
+      password: "Sirh@2024", 
     },
   },
 };
@@ -102,7 +102,7 @@ app.post("/getRattachementAD", async (req, res) => {
         FROM [Therefore].[dbo].[TheSirh]
         WHERE [Login] = @username
       `);
-
+      console.log(username)
    
     if (result.recordset.length > 0) {
       //console.log("Rattachement_AD trouvé :", result.recordset[0].Rattachement_AD);
