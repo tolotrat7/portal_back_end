@@ -2,7 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const sql = require("mssql");
 const app = express();
-const port = process.env.PORT;
+const port = 8001;
 const ldapjs = require("ldapjs");
 var DashboardRouter = require('./routes/dashboard')
 
@@ -155,9 +155,19 @@ app.get("/getLoginHistory", async (req, res) => {
     let result = await pool
       .request()
       .query(`
-              SELECT UserNo,DisplayName,date_connexion 
-              FROM dbo.LoginUserHistory RIGHT JOIN TheUser ON TheUser.UserNo=idUser 
-              JOIN TheSirh ON TheSirh.Login = DisplayName
+                SELECT 
+                    L.id AS LoginHistoryId,
+                    U.Name,
+                    L.date_connexion
+                FROM 
+                    [Therefore].[dbo].[LoginUserHistory] L
+                INNER JOIN 
+                    [Therefore].[dbo].[TheUser] U
+                    ON L.idUser = U.UserNo
+                WHERE 
+                    L.date_connexion IS NOT NULL  
+                ORDER BY 
+                    L.date_connexion ASC
       `);
     res.status(200).send(result.recordset);
   } catch (err) {
@@ -346,7 +356,7 @@ app.post("/log-login", async (req, res) => {
   }
 
   try {
-    const pool = await sql.connect(dbConfig);
+    const pool = await sql.connect(config);
     await pool
       .request()
       .input("idUser", sql.Int, idUser)
