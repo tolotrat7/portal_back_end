@@ -11,6 +11,7 @@ app.use(express.json());
 app.use('/dashboard',DashboardRouter)
 const config = {
   server: "172.16.112.84",
+  
   port: 1433,
   database: "Therefore",
   options: {
@@ -38,7 +39,6 @@ const configSage = {
   authentication: {
     type: "default",
     options: {
-      //domain: 'SMTP-GROUP', // Domain or machine name (or leave as an empty string for local auth)
       userName: "recap",
       password: "PaieConsult1234",
     },
@@ -154,14 +154,11 @@ app.get("/getLoginHistory", async (req, res) => {
     let pool = await sql.connect(config);
     let result = await pool
       .request()
-      .query(`SELECT TOP (1000) 
-              U.[Id]
-              , U.[Name]
-              , LH.[Timestamp]
-              FROM [Therefore].[dbo].[TheUser] U
-              JOIN [Therefore].[dbo].[TheLoginHistory] LH
-              ON U.UserNo = LH.UserNo
-              ORDER BY LH.[Timestamp] DESC`);
+      .query(`
+              SELECT UserNo,DisplayName,date_connexion 
+              FROM dbo.LoginUserHistory RIGHT JOIN TheUser ON TheUser.UserNo=idUser 
+              JOIN TheSirh ON TheSirh.Login = DisplayName
+      `);
     res.status(200).send(result.recordset);
   } catch (err) {
     res.status(500).send("Database error");
@@ -231,11 +228,6 @@ app.get("/getSociete/:id_user", async (req, res) => {
     res.status(500).send("Erreur serveur.");
   }
 });
-
-
-
-
-
 app.get("/postes/:societe", async (req, res) => {
   try {
     let pool = await sql.connect(config);
@@ -345,6 +337,30 @@ app.post("/ldap",  (req, res) => {
     });
   });
 });
+app.post("/log-login", async (req, res) => {
+  console.log("Requête reçue pour /log-login");
+  const { idUser } = req.body;
+
+  if (!idUser) {
+    return res.status(400).json({ message: "idUser est requis." });
+  }
+
+  try {
+    const pool = await sql.connect(dbConfig);
+    await pool
+      .request()
+      .input("idUser", sql.Int, idUser)
+      .query(
+        "INSERT INTO [Therefore].[dbo].[LoginUserHistory] (idUser, date_connexion) VALUES (@idUser, GETDATE())"
+      );
+
+    res.status(200).json({ message: "Historique de connexion enregistré." });
+  } catch (error) {
+    console.error("Erreur SQL:", error);
+    res.status(500).json({ message: "Erreur serveur." });
+  }
+});
+
 
 app.listen(port, () => {
   //console.log("Mande express");
