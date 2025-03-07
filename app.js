@@ -179,7 +179,18 @@ app.get("/getLoginHistory", async (req, res) => {
 });
 
 
-
+app.post("/get-signatures",async(req,res)=>{
+    try{
+      const validateurs= req.body.validateurs; 
+      
+        let pool = await sql.connect(config);
+        let result = await pool.request().query(`SELECT Name,UserNo,Signature FROM [Therefore].[dbo].[TheSignature] JOIN TheUser ON TheUser.Name = Login WHERE UserNo IN (${"'" + validateurs.join("','") + "'"})`);
+        res.status(200).send(result.recordset);
+    }catch(err){
+        res.status(500).send("Database error");
+        console.error(err);
+    }
+})
 app.get("/validations/:id_user", async (req, res) => {
   try {
     //console.log("Je suis là");
