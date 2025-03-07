@@ -5,10 +5,12 @@ const app = express();
 const port = 8001;
 const ldapjs = require("ldapjs");
 var DashboardRouter = require('./routes/dashboard')
+var LoginRouter = require('./routes/login')
 
 app.use(cors());
 app.use(express.json());
 app.use('/dashboard',DashboardRouter)
+app.use('/login',LoginRouter)
 const config = {
   server: "172.16.112.84",
   
