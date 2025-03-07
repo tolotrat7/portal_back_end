@@ -4,16 +4,16 @@ const sql = require("mssql");
 const app = express();
 const port = process.env.PORT;
 const ldapjs = require("ldapjs");
-var DashboardRouter = require('./routes/dashboard')
-var LoginRouter = require('./routes/login')
+var DashboardRouter = require("./routes/dashboard");
+var LoginRouter = require("./routes/login");
 
 app.use(cors());
 app.use(express.json());
-app.use('/dashboard',DashboardRouter)
-app.use('/login',LoginRouter)
+app.use("/dashboard", DashboardRouter);
+app.use("/login", LoginRouter);
 const config = {
   server: "172.16.112.84",
-  
+
   port: 1433,
   database: "Therefore",
   options: {
@@ -24,8 +24,8 @@ const config = {
     type: "default",
     options: {
       //domain: 'SMTP-GROUP', // Domain or machine name (or leave as an empty string for local auth)
-      userName: "sirh", 
-      password: "Sirh@2024", 
+      userName: "sirh",
+      password: "Sirh@2024",
     },
   },
 };
@@ -54,7 +54,7 @@ app.post("/receive-username", (req, res) => {
   }
 
   //console.log("Username reçu du frontend :", username);
-  
+
   res.json({ message: `Username ${username} bien reçu !` });
 });
 
@@ -68,17 +68,19 @@ app.post("/SocieteByUsername", async (req, res) => {
     }
 
     let pool = await sql.connect(config);
-    const result = await pool.request()
-      .input("username", sql.NVarChar, username)
-      .query(`
+    const result = await pool
+      .request()
+      .input("username", sql.NVarChar, username).query(`
         SELECT societe_AD FROM TheSirh WHERE Login = @username
       `);
 
     if (result.recordset.length > 0) {
-      //console.log("Société trouvée:", result.recordset[0].societe_AD); 
+      //console.log("Société trouvée:", result.recordset[0].societe_AD);
       res.status(200).json({ societe: result.recordset[0].societe_AD });
     } else {
-      res.status(404).json({ message: "Société non trouvée pour cet utilisateur." });
+      res
+        .status(404)
+        .json({ message: "Société non trouvée pour cet utilisateur." });
     }
   } catch (err) {
     console.error("Erreur lors de la récupération de la société:", err);
@@ -88,29 +90,31 @@ app.post("/SocieteByUsername", async (req, res) => {
 
 app.post("/getRattachementAD", async (req, res) => {
   try {
-    const { username } = req.body;  
+    const { username } = req.body;
     if (!username) {
       return res.status(400).json({ message: "Aucun username reçu" });
     }
 
-   
     let pool = await sql.connect(config);
 
-    
-    const result = await pool.request()
-      .input("username", sql.NVarChar, username)  
-      .query(`
+    const result = await pool
+      .request()
+      .input("username", sql.NVarChar, username).query(`
         SELECT [Rattachement_AD]
         FROM [Therefore].[dbo].[TheSirh]
         WHERE [Login] = @username
       `);
-      // console.log(username)
-   
+    // console.log(username)
+
     if (result.recordset.length > 0) {
       //console.log("Rattachement_AD trouvé :", result.recordset[0].Rattachement_AD);
-      res.status(200).json({ rattachement: result.recordset[0].Rattachement_AD });
+      res
+        .status(200)
+        .json({ rattachement: result.recordset[0].Rattachement_AD });
     } else {
-      res.status(404).json({ message: "Aucun rattachement trouvé pour cet utilisateur." });
+      res
+        .status(404)
+        .json({ message: "Aucun rattachement trouvé pour cet utilisateur." });
     }
   } catch (err) {
     console.error("Erreur lors de la récupération du rattachement:", err);
@@ -120,29 +124,28 @@ app.post("/getRattachementAD", async (req, res) => {
 
 app.post("/getDGSociete", async (req, res) => {
   try {
-    const { username } = req.body;  
+    const { username } = req.body;
     if (!username) {
       return res.status(400).json({ message: "Aucun username reçu" });
     }
 
-   
     let pool = await sql.connect(config);
 
-    
-    const result = await pool.request()
-      .input("username", sql.NVarChar, username)  
-      .query(`
+    const result = await pool
+      .request()
+      .input("username", sql.NVarChar, username).query(`
         SELECT [DG_Societe]
         FROM [Therefore].[dbo].[TheSirh]
         WHERE [Login] = @username
       `);
 
-   
     if (result.recordset.length > 0) {
       //console.log("DG_Societe trouvé :", result.recordset[0].DG_Societe);
       res.status(200).json({ dgsociete: result.recordset[0].DG_Societe });
     } else {
-      res.status(404).json({ message: "Aucun rattachement trouvé pour cet utilisateur." });
+      res
+        .status(404)
+        .json({ message: "Aucun rattachement trouvé pour cet utilisateur." });
     }
   } catch (err) {
     console.error("Erreur lors de la récupération du rattachement:", err);
@@ -150,13 +153,10 @@ app.post("/getDGSociete", async (req, res) => {
   }
 });
 
-
 app.get("/getLoginHistory", async (req, res) => {
   try {
     let pool = await sql.connect(config);
-    let result = await pool
-      .request()
-      .query(`
+    let result = await pool.request().query(`
                 SELECT 
                     L.id AS LoginHistoryId,
                     U.Name,
@@ -178,19 +178,43 @@ app.get("/getLoginHistory", async (req, res) => {
   }
 });
 
+app.post("/get-signatures", async (req, res) => {
+  try {
+    const validateurs = req.body.validateurs;
 
-app.post("/get-signatures",async(req,res)=>{
-    try{
-      const validateurs= req.body.validateurs; 
-      
-        let pool = await sql.connect(config);
-        let result = await pool.request().query(`SELECT Name,UserNo,Signature FROM [Therefore].[dbo].[TheSignature] JOIN TheUser ON TheUser.Name = Login WHERE UserNo IN (${"'" + validateurs.join("','") + "'"})`);
-        res.status(200).send(result.recordset);
-    }catch(err){
-        res.status(500).send("Database error");
-        console.error(err);
-    }
-})
+    let params = "UserNo";
+    if (isNaN(parseInt(req.body.validateurs[0]))) params = "Login";
+    // console.log(params);
+    let pool = await sql.connect(config);
+    let result = await pool
+      .request()
+      .query(
+        `SELECT Name,UserNo,Signature FROM [Therefore].[dbo].[TheSignature] JOIN TheUser ON TheUser.Name = Login WHERE ${params} IN (${
+          "'" + validateurs.join("','") + "'"
+        })`
+      );
+    res.status(200).send(result.recordset);
+  } catch (err) {
+    res.status(500).send("Database error");
+    console.error(err);
+  }
+});
+app.put("/update-signature/:username", async (req, res) => {
+  try {
+    let pool = await sql.connect(config);
+    let result = await pool
+      .request()
+      .input("username", sql.NVarChar, req.params.username)
+      .input("signature", sql.NVarChar, req.body.signature)
+      .query(
+        `UPDATE [Therefore].[dbo].[TheSignature] SET Signature=@signature WHERE Login = @username`
+      );
+      res.json({ message: "Signature updated successfully", result: result });
+  } catch (err) {
+    res.status(500).send("Database error");
+    console.error(err);
+  }
+});
 app.get("/validations/:id_user", async (req, res) => {
   try {
     //console.log("Je suis là");
@@ -208,8 +232,6 @@ app.get("/validations/:id_user", async (req, res) => {
   }
   //   res.send('Hello World!')
 });
-
-
 
 app.get("/validation/:id_user", async (req, res) => {
   try {
@@ -233,8 +255,7 @@ app.get("/getSociete/:id_user", async (req, res) => {
     let pool = await sql.connect(config);
 
     // Requête pour récupérer la société rattachée à l'utilisateur connecté
-    const result = await pool.request()
-      .input("id_user", sql.Int, id_user)
+    const result = await pool.request().input("id_user", sql.Int, id_user)
       .query(`
         SELECT TOP (1) [idsociete]
         FROM [dbo].[Rattachement_Societe]
@@ -244,7 +265,9 @@ app.get("/getSociete/:id_user", async (req, res) => {
     if (result.recordset.length > 0) {
       res.status(200).json({ societe: result.recordset[0].idsociete });
     } else {
-      res.status(404).json({ message: "Société non trouvée pour cet utilisateur." });
+      res
+        .status(404)
+        .json({ message: "Société non trouvée pour cet utilisateur." });
     }
   } catch (err) {
     console.error("Erreur dans la récupération des données:", err);
@@ -254,7 +277,7 @@ app.get("/getSociete/:id_user", async (req, res) => {
 app.get("/postes/:societe", async (req, res) => {
   try {
     let pool = await sql.connect(config);
-    let societe=req.params.societe
+    let societe = req.params.societe;
     let result = await pool
       .request()
       .query(
@@ -304,24 +327,30 @@ app.get("/get-validators", async (req, res) => {
   }
 });
 
+app.post("/ldap", (req, res) => {
+  //console.log(req.body);
 
-app.post("/ldap",  (req, res) => {
-    //console.log(req.body);
-    
   const client = ldapjs.createClient({
     url: "ldap://ad-server-1.smtp-group.mg",
     reconnect: true,
   });
-  const userDn = `SMTP-GROUP\\FT161`; 
-  const userPassword = "FUwK38bc"; 
+  const userDn = `SMTP-GROUP\\FT161`;
+  const userPassword = "FUwK38bc";
   const searchBase = "dc=smtp-group,dc=mg";
-  const usernameAttribute = "samaccountname"; 
-  const userIdentifier = req.body.username; 
+  const usernameAttribute = "samaccountname";
+  const userIdentifier = req.body.username;
   let val = null;
   const searchOptions = {
-    filter: `(${usernameAttribute}=${userIdentifier})`, 
-    scope: "sub", 
-    attributes: ["DisplayName", "Office", "mail", "samaccountname", "Description","distinguishedName"], 
+    filter: `(${usernameAttribute}=${userIdentifier})`,
+    scope: "sub",
+    attributes: [
+      "DisplayName",
+      "Office",
+      "mail",
+      "samaccountname",
+      "Description",
+      "distinguishedName",
+    ],
   };
   client.bind(userDn, userPassword, (err) => {
     if (err) {
@@ -336,9 +365,8 @@ app.post("/ldap",  (req, res) => {
 
       ldapRes.on("searchEntry", async (entry) => {
         let element = {};
-        entry.attributes.forEach(attribute => {
-            element[attribute.type]=attribute.values[0]
-            
+        entry.attributes.forEach((attribute) => {
+          element[attribute.type] = attribute.values[0];
         });
         try {
           let pool = await sql.connect(config);
@@ -383,7 +411,6 @@ app.post("/log-login", async (req, res) => {
     res.status(500).json({ message: "Erreur serveur." });
   }
 });
-
 
 app.listen(port, () => {
   //console.log("Mande express");
