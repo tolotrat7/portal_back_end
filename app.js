@@ -102,7 +102,7 @@ app.post("/getRattachementAD", async (req, res) => {
         FROM [Therefore].[dbo].[TheSirh]
         WHERE [Login] = @username
       `);
-      console.log(username)
+      // console.log(username)
    
     if (result.recordset.length > 0) {
       //console.log("Rattachement_AD trouvé :", result.recordset[0].Rattachement_AD);
