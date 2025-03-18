@@ -64,49 +64,44 @@ router.get("/temps-moyen-validation", async (req, res) => {
     let heures = [];
     for (const element of data) {
       await calculTemps_moyen(element, authHeader, heures);
-     
     }
-    
-    
-   
 
     if (heures.length === 0) {
-      res.status(500).json("Le tableau est vide, impossible de calculer la moyenne.");
+      res
+        .status(500)
+        .json("Le tableau est vide, impossible de calculer la moyenne.");
     } else {
       const sum = heures.reduce(
         (accumulator, currentValue) => accumulator + currentValue,
         0
       );
       const avg = sum / heures.length;
-      const diffMinutes=Math.floor(avg / (1000 * 60*60));
+      const diffMinutes = Math.floor(avg / (1000 * 60 * 60));
       return res.status(200).json(diffMinutes);
     }
-
-    
   } catch (error) {
     // ////console.log("Erreur");
     return res.status(500).json(error.message);
   }
 });
-router.get("/tendances/:societe",async (req, res) => {
-  let societe=req.params.societe;
+router.get("/tendances/:societe", async (req, res) => {
+  let societe = req.params.societe;
 
   let pool = await sql.connect(config);
-    try {
-      let result = await pool
-      .request()
+  try {
+    let result = await pool.request()
       .query(`Select TOP 5 CASE WHEN Poste_a_pourvoir_ IS NULL THEN Poste_a_pourvoir_creation ELSE Poste_a_pourvoir_ END AS Poste, SUM(Nombre_de_poste_a_pourvoir) AS nombre,Societe from Recrutement_info
-          WHERE CASE WHEN Poste_a_pourvoir_ IS NULL THEN Poste_a_pourvoir_creation ELSE Poste_a_pourvoir_ END IS NOT NULL AND MONTH(Date_de_demande)=${(new Date()).getMonth()+1} AND Societe='${societe}'
+          WHERE CASE WHEN Poste_a_pourvoir_ IS NULL THEN Poste_a_pourvoir_creation ELSE Poste_a_pourvoir_ END IS NOT NULL AND MONTH(Date_de_demande)=${
+            new Date().getMonth() + 1
+          } AND Societe='${societe}'
           GROUP BY CASE WHEN Poste_a_pourvoir_ IS NULL THEN Poste_a_pourvoir_creation ELSE Poste_a_pourvoir_ END,Societe ORDER BY SUM(Nombre_de_poste_a_pourvoir) DESC`);
-    const data = result.recordset
-  return res.status(200).json(data);
-    } catch (error) {
-      return res.send(500).json(error.message);
-    }
-    
-})
-const calculTemps_moyen=async(element,authHeader,heures)=>{
-  
+    const data = result.recordset;
+    return res.status(200).json(data);
+  } catch (error) {
+    return res.send(500).json(error.message);
+  }
+});
+const calculTemps_moyen = async (element, authHeader, heures) => {
   if (authHeader && authHeader.startsWith("Bearer ")) {
     await axios
       .post(
@@ -150,7 +145,6 @@ const calculTemps_moyen=async(element,authHeader,heures)=>{
                 counter = counter + 2;
                 continue;
               }
-              
 
               heures.push(
                 new Date(data[counter].ActionDateISO8601) -
@@ -158,14 +152,53 @@ const calculTemps_moyen=async(element,authHeader,heures)=>{
               );
               counter = counter + 2;
             }
-            
-          
           });
-      })
-     
+      });
   } else {
     // No valid token found
     throw new Error("No valid token found");
   }
-}
+};
+router.get("/get-status/:username", async (req, res) => {
+  const username = req.params.username;
+  let pool = await sql.connect(config);
+  const result = await pool.request().input("username", sql.NVarChar, username)
+    .query(`
+          SELECT * FROM TheCat5  WHERE LOWER(Validateur_DG) =LOWER(@username) OR LOWER(Validateur_DG__du_Groupe)=LOWER(@username) OR LOWER(Nom_de_Validateur)=LOWER(@username)
+        `);
+  const data = result.recordset;
+  let element = {
+    en_cours: 0,
+    termine: 0,
+    rejet: 0,
+  };
+  data.forEach((demande) => {
+    // console.log(demande);
+
+    if (demande.Nom_de_Validateur.toLowerCase() == username.toLowerCase()) {
+      if (demande.Direction_de_rattachement) {
+        if (demande.Direction_de_rattachement == 1) element.termine++;
+        else if (demande.Direction_de_rattachement == 2) element.rejete++;
+      } else element.en_cours++;
+    }
+    if (
+      demande.Validateur_DG__du_Groupe.toLowerCase() == username.toLowerCase()
+    ) {
+      if (demande.DG_du_Groupe) {
+        if (demande.DG_du_Groupe == 1) element.termine++;
+        else if (demande.DG_du_Groupe == 2) element.rejete++;
+      } else element.en_cours++;
+    }
+    if (demande.Validateur_DG.toLowerCase() == username.toLowerCase()) {
+      if (demande.DG_Societe) {
+        if (demande.DG_Societe == 1) element.termine++;
+        else if (demande.DG_Societe == 2) element.rejete++;
+      } else element.en_cours++;
+    }
+    
+  });
+
+  //console.log("Rattachement_AD trouvé :", result.recordset[0].Rattachement_AD);
+  res.status(200).json(element);
+});
 module.exports = router;
