@@ -164,7 +164,36 @@ router.get("/get-status/:username", async (req, res) => {
   let pool = await sql.connect(config);
   const result = await pool.request().input("username", sql.NVarChar, username)
     .query(`
-          SELECT * FROM TheCat5  WHERE LOWER(Validateur_DG) =LOWER(@username) OR LOWER(Validateur_DG__du_Groupe)=LOWER(@username) OR LOWER(Nom_de_Validateur)=LOWER(@username)
+          SELECT  [DocNo]
+      ,[Validateur_DG__du_Groupe]
+      ,[DG_du_Groupe]
+      ,[Validateur_DG]
+      ,[Direction_de_rattachement]
+      ,[Direction_des_Ressources_Humaines]
+      ,[DG_Societe] as 'DG_Société'
+      ,[DAF_DG_Groupe]
+      ,[Motif_de_recrutement]
+      ,[Type_de_contrat]
+      ,[Budgetise]
+      ,[duree_Cdd]
+      ,[Cabinet_de_recrutement_externe]
+      ,[Date_de_demande]
+      ,[Date_dembauche_souhaite]
+      ,[Autre_motif_de_recrutement]
+      ,[Poste_a_pourvoir_]
+      ,[Autre_type_de_contrat]
+      ,[Effectif_actuel_au_poste]
+      ,[Nombre_de_poste_a_pourvoir]
+      ,[Motif_si_non]
+      ,[Nom_de_Validateur]
+      ,[Poste_a_pourvoir_creation]
+      ,[Societe]
+      ,[Departement]
+      ,[StatutRH]
+      ,[SituationRH]
+      ,[Societe_recruteuse]
+  FROM [Therefore].[dbo].[TheCat5]
+  WHERE LOWER(Validateur_DG) =LOWER(@username) OR LOWER(Validateur_DG__du_Groupe)=LOWER(@username) OR LOWER(Nom_de_Validateur)=LOWER(@username)
         `);
   const data = result.recordset;
   let element = {
@@ -174,31 +203,27 @@ router.get("/get-status/:username", async (req, res) => {
   };
   data.forEach((demande) => {
     // console.log(demande);
-
-    if (demande.Nom_de_Validateur.toLowerCase() == username.toLowerCase()) {
-      if (demande.Direction_de_rattachement) {
-        if (demande.Direction_de_rattachement == 1) element.termine++;
-        else if (demande.Direction_de_rattachement == 2) element.rejete++;
-      } else element.en_cours++;
-    }
     if (
-      demande.Validateur_DG__du_Groupe.toLowerCase() == username.toLowerCase()
+      demande.Direction_de_rattachement === 1 &&
+      demande.Direction_des_Ressources_Humaines === 1 &&
+      demande.DG_Société === 1 &&
+      demande.DAF_Groupe === 1
     ) {
-      if (demande.DG_du_Groupe) {
-        if (demande.DG_du_Groupe == 1) element.termine++;
-        else if (demande.DG_du_Groupe == 2) element.rejete++;
-      } else element.en_cours++;
+      element.termine = element.termine + 1;
+    } else if (
+      demande.Direction_de_rattachement === 2 ||
+      demande.Direction_des_Ressources_Humaines === 2 ||
+      demande.DG_Société === 2 ||
+      demande.DAF_Groupe === 2
+    ) {
+      element.rejet = element.rejet + 1;
+    } else {
+      element.en_cours = element.en_cours + 1;
     }
-    if (demande.Validateur_DG.toLowerCase() == username.toLowerCase()) {
-      if (demande.DG_Societe) {
-        if (demande.DG_Societe == 1) element.termine++;
-        else if (demande.DG_Societe == 2) element.rejete++;
-      } else element.en_cours++;
-    }
-    
   });
 
   //console.log("Rattachement_AD trouvé :", result.recordset[0].Rattachement_AD);
-  res.status(200).json(element);
+  res.status(200).json({ status: element, data: data });
 });
+
 module.exports = router;

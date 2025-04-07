@@ -100,9 +100,10 @@ app.post("/getRattachementAD", async (req, res) => {
     const result = await pool
       .request()
       .input("username", sql.NVarChar, username).query(`
-        SELECT [Rattachement_AD]
-        FROM [Therefore].[dbo].[TheSirh]
-        WHERE [Login] = @username
+         SELECT S1.[Rattachement_AD],S2.name
+        FROM [Therefore].[dbo].[TheSirh] as S1
+		    JOIN [Therefore].[dbo].[TheSirh] as S2 on S2.Login=S1.Rattachement_AD
+        WHERE S1.[Login] = @username
       `);
     // console.log(username)
 
@@ -110,7 +111,7 @@ app.post("/getRattachementAD", async (req, res) => {
       //console.log("Rattachement_AD trouvé :", result.recordset[0].Rattachement_AD);
       res
         .status(200)
-        .json({ rattachement: result.recordset[0].Rattachement_AD });
+        .json({ rattachement: result.recordset[0].Rattachement_AD,rattachement_name:result.recordset[0].name});
     } else {
       res
         .status(404)
@@ -134,14 +135,15 @@ app.post("/getDGSociete", async (req, res) => {
     const result = await pool
       .request()
       .input("username", sql.NVarChar, username).query(`
-        SELECT [DG_Societe]
-        FROM [Therefore].[dbo].[TheSirh]
-        WHERE [Login] = @username
+       SELECT S1.[DG_Societe],S2.name
+        FROM [Therefore].[dbo].[TheSirh] as S1
+		JOIN [Therefore].[dbo].[TheSirh] as S2 on S2.Login=S1.DG_Societe
+        WHERE S1.[Login] = @username
       `);
 
     if (result.recordset.length > 0) {
       //console.log("DG_Societe trouvé :", result.recordset[0].DG_Societe);
-      res.status(200).json({ dgsociete: result.recordset[0].DG_Societe });
+      res.status(200).json({ dgsociete: result.recordset[0].DG_Societe,dgsociete_name:result.recordset[0].name });
     } else {
       res
         .status(404)
@@ -303,12 +305,13 @@ app.get("/societes", async (req, res) => {
     console.error(err);
   }
 });
-app.get("/directions", async (req, res) => {
+app.get("/directions/:societe", async (req, res) => {
   try {
+    const societe=req.params.societe;
     let pool = await sql.connect(config);
     let result = await pool
       .request()
-      .query("SELECT [NOM] FROM [Therefore].[dbo].[departement]");
+      .query(`SELECT [NOM] FROM [Therefore].[dbo].[departement] WHERE [SOCIETE]= '${societe}'`);
     res.status(200).send(result.recordset);
   } catch (err) {
     res.status(500).send("Database error");
@@ -412,6 +415,34 @@ app.post("/log-login", async (req, res) => {
   }
 });
 
+app.post("/get-usernames", async (req, res) => {
+  try {
+    const { usernames } = req.body;
+    
+
+    let pool = await sql.connect(config);
+
+    const result = await pool
+      .request()
+      .query(`
+       SELECT LOGIN,name
+        FROM [Therefore].[dbo].[TheSirh] 
+        WHERE LOWER([Login]) IN (${usernames.map(word => `'${word.toLowerCase()}'`).join(',')})
+      `);
+
+    if (result.recordset.length > 0) {
+      //console.log("DG_Societe trouvé :", result.recordset[0].DG_Societe);
+      res.status(200).json({ data:result.recordset});
+    } else {
+      res
+        .status(404)
+        .json({ message: "Aucun rattachement trouvé pour cet utilisateur." });
+    }
+  } catch (err) {
+    console.error("Erreur lors de la récupération du rattachement:", err);
+    res.status(500).send("Erreur serveur.");
+  }
+});
 app.listen(port, () => {
   //console.log("Mande express");
 });
