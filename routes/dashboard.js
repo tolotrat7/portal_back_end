@@ -171,7 +171,7 @@ router.get("/get-status/:username", async (req, res) => {
       ,[Direction_de_rattachement]
       ,[Direction_des_Ressources_Humaines]
       ,[DG_Societe] as 'DG_Société'
-      ,[DAF_DG_Groupe]
+      ,[DAF_DG_Groupe] as 'DAF_Groupe'
       ,[Motif_de_recrutement]
       ,[Type_de_contrat]
       ,[Budgetise]
