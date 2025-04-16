@@ -170,7 +170,7 @@ router.get("/get-status/:username", async (req, res) => {
       ,[Motif_de_recrutement]
       ,[Type_de_contrat]
       ,[Budgetise]
-      ,[duree_Cdd] AS 'Duree_du_CDD'
+      ,[duree_Cdd]
       ,[Cabinet_de_recrutement_externe]
       ,[Date_de_demande]
       ,[Date_dembauche_souhaite]
