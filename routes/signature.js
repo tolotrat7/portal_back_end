@@ -60,7 +60,7 @@ const get_signatures= async (validateurs) => {
       return result;
 }
 
-router.put("/update/:username", async (req, res) => {
+router.post("/update/:username", async (req, res) => {
   
 
   try {
